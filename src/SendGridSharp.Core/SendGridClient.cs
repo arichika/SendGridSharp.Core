@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using Newtonsoft.Json;
 
-namespace SendGridSharp
+namespace SendGridSharp.Core
 {
     public class SendGridClient
     {

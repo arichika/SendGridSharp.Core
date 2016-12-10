@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace SendGridSharp
+namespace SendGridSharp.Core
 {
     public class SendGridMessage
     {

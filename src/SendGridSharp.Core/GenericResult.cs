@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace SendGridSharp
+namespace SendGridSharp.Core
 {
     internal class GenericResult
     {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SendGridSharp
+namespace SendGridSharp.Core
 {
     public static class SmtpHeaderExtensions
     {

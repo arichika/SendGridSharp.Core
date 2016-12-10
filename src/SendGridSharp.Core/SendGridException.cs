@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace SendGridSharp
+namespace SendGridSharp.Core
 {
-    [Serializable]
     public class SendGridException : Exception
     {
         public SendGridException()
@@ -17,11 +16,6 @@ namespace SendGridSharp
 
         public SendGridException(string message, Exception inner)
             : base(message, inner)
-        {
-        }
-
-        protected SendGridException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
         {
         }
     }

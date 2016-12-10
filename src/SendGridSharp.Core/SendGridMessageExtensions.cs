@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace SendGridSharp
+namespace SendGridSharp.Core
 {
     public static class SendGridMessageExtensions
     {
