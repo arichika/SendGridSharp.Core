@@ -1,7 +1,15 @@
-SendGridSharp
+SendGridSharp.Core
 =============
 
-Yet Another SendGrid Client for C#
+Yet Another SendGrid Client for .NET Core
+
+## How To Install
+
+Please Install by NuGet. Just only.
+
+```
+PM> Install-Package SendGridSharp.Core
+```
 
 ## Usage
 
@@ -13,8 +21,8 @@ var client = new SendGridClient("API_KEY");
 
 var message = new SendGridMessage();
 
-message.To.Add("****@****.com");
-message.From = "****@****.com";
+message.To.Add("****@example.com");
+message.From = "****@example.com";
 
 message.Header.AddSubstitution("-name-", "customer");
 
