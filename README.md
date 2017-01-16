@@ -2,6 +2,22 @@ SendGridSharp.Core
 =============
 
 Yet Another SendGrid Client for .NET Core
+## Updates
+
+### 1.1.0
+* Add Logging.
+* Support Basic Retry Policy at SendAsync() by default. 
+* RetryPolicy customization.
+
+Increase intervals calculated by this formula `TimeSpan = backoff * currentTimes ^ 2 + InitialDelay`. 
+```
+await SendAsync(
+  new SendGridClient(
+    new NetworkCredential("account", "password"),
+    new LoggerFactory(),
+    new SendGridRetryPolicy(5, TimeSpan.FromSeconds(5), 3.0)));
+```
+If you set this, it means that ,max retry = 5 times, fist waiting = 5 sec,  backoff = 3.0 => { 0,-> 8,->, 17,-> 32,-> 53 }.
 
 ## How To Install
 
