@@ -8,13 +8,13 @@ using Xunit;
 
 namespace SendGridSharp.Core.Tests
 {
-    public class SendGridClientTest
+    public class SendGridClientSendTest
     {
         public IConfigurationRoot Configuration { get; set; }
 
         private SendGridClient Client { get; set; }
 
-        public SendGridClientTest()
+        public SendGridClientSendTest()
         {
             var builder = new ConfigurationBuilder()
                  .SetBasePath(AppContext.BaseDirectory)

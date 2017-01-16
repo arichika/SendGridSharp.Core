@@ -1,18 +1,37 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace SendGridSharp.Core
 {
     public class SendGridClient
     {
+        private readonly ILogger _logger = ApplicationLogging.LoggerFactory.CreateLogger<SendGridClient>();
+
+        private const string Endpoint = "https://api.sendgrid.com/api/mail.send.json";
+        private readonly string _apiKey;
+        private readonly NetworkCredential _credentials;
+
+        public readonly SendGridRetryPolicy SendGridRetryPolicy = new SendGridRetryPolicy();
+
+        public Predicate<Exception> IsTransient = ex => ex is HttpRequestException || ex is SendGridException;
+
+
         public SendGridClient(NetworkCredential credentials)
         {
             _credentials = credentials;
+        }
+
+        public SendGridClient(NetworkCredential credentials,ILoggerFactory loggerFactory, SendGridRetryPolicy sendGridRetryPolicy = null)
+        {
+            _credentials = credentials;
+            if (loggerFactory != null) _logger = loggerFactory.CreateLogger<SendGridClient>();
+            SendGridRetryPolicy = sendGridRetryPolicy ?? new SendGridRetryPolicy();
         }
 
         public SendGridClient(string apiKey)
@@ -20,10 +39,13 @@ namespace SendGridSharp.Core
             _apiKey = apiKey;
         }
 
-        private const string Endpoint = "https://api.sendgrid.com/api/mail.send.json";
+        public SendGridClient(string apiKey, ILoggerFactory loggerFactory, SendGridRetryPolicy sendGridRetryPolicy = null)
+        {
+            _apiKey = apiKey;
+            if (loggerFactory != null) _logger = loggerFactory.CreateLogger<SendGridClient>();
+            SendGridRetryPolicy = sendGridRetryPolicy ?? new SendGridRetryPolicy();
+        }
 
-        private readonly string _apiKey;
-        private readonly NetworkCredential _credentials;
 
         public void Send(SendGridMessage message)
         {
@@ -43,7 +65,7 @@ namespace SendGridSharp.Core
             }
         }
 
-        public async Task SendAsync(SendGridMessage message)
+        private async Task SendAsyncInternal(SendGridMessage message)
         {
             var content = GetContent(message);
 
@@ -58,6 +80,28 @@ namespace SendGridSharp.Core
             if (!result.IsSuccess)
             {
                 throw new SendGridException(result.Message);
+            }
+        }
+
+        public async Task SendAsync(SendGridMessage message)
+        {
+            var currentRetry = 0;
+            for (;;)
+            {
+                try
+                {
+                    await SendAsyncInternal(message);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"{ex}");
+                    currentRetry++;
+
+                    if (SendGridRetryPolicy.IsRetryOver(currentRetry) || !IsTransient(ex))
+                        throw;
+                }
+                await Task.Delay(SendGridRetryPolicy.CalcWaitTimeSpan(currentRetry));
             }
         }
 
