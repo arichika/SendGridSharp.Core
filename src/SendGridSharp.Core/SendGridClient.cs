@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -17,85 +18,57 @@ namespace SendGridSharp.Core
         private readonly string _apiKey;
         private readonly NetworkCredential _credentials;
 
-        public readonly SendGridRetryPolicy SendGridRetryPolicy = new SendGridRetryPolicy();
+        private static readonly ConcurrentDictionary<string, HttpClient> HttpClients = new ConcurrentDictionary<string, HttpClient>();
+
+        public readonly SendGridRetryPolicy SendGridRetryPolicy;
 
         public Predicate<Exception> IsTransient = ex => ex is HttpRequestException || ex is SendGridException;
 
 
-        public SendGridClient(NetworkCredential credentials)
+        public SendGridClient(NetworkCredential credentials,ILoggerFactory loggerFactory = null, SendGridRetryPolicy sendGridRetryPolicy = null)
         {
             _credentials = credentials;
-        }
 
-        public SendGridClient(NetworkCredential credentials,ILoggerFactory loggerFactory, SendGridRetryPolicy sendGridRetryPolicy = null)
-        {
-            _credentials = credentials;
-            if (loggerFactory != null) _logger = loggerFactory.CreateLogger<SendGridClient>();
-            SendGridRetryPolicy = sendGridRetryPolicy ?? new SendGridRetryPolicy();
-        }
+            if (loggerFactory != null)
+                _logger = loggerFactory.CreateLogger<SendGridClient>();
 
-        public SendGridClient(string apiKey)
-        {
-            _apiKey = apiKey;
-        }
-
-        public SendGridClient(string apiKey, ILoggerFactory loggerFactory, SendGridRetryPolicy sendGridRetryPolicy = null)
-        {
-            _apiKey = apiKey;
-            if (loggerFactory != null) _logger = loggerFactory.CreateLogger<SendGridClient>();
             SendGridRetryPolicy = sendGridRetryPolicy ?? new SendGridRetryPolicy();
         }
 
 
-        public void Send(SendGridMessage message)
+        public SendGridClient(string apiKey, ILoggerFactory loggerFactory = null, SendGridRetryPolicy sendGridRetryPolicy = null)
         {
-            var content = GetContent(message);
+            _apiKey = apiKey;
 
-            var client = new HttpClient(new WebApiHandler(_apiKey));
+            if (loggerFactory != null)
+                _logger = loggerFactory.CreateLogger<SendGridClient>();
 
-            var response = client.PostAsync(Endpoint, content).Result;
-
-            var responseContent = response.Content.ReadAsStringAsync().Result;
-
-            var result = JsonConvert.DeserializeObject<GenericResult>(responseContent);
-
-            if (!result.IsSuccess)
-            {
-                throw new SendGridException(result.Errors[0]);
-            }
+            SendGridRetryPolicy = sendGridRetryPolicy ?? new SendGridRetryPolicy();
         }
 
-        private async Task SendAsyncInternal(SendGridMessage message)
+
+        public void Send(SendGridMessage message, bool newInstance = false)
         {
-            var content = GetContent(message);
-
-            var client = new HttpClient(new WebApiHandler(_apiKey));
-
-            var response = await client.PostAsync(Endpoint, content);
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            var result = JsonConvert.DeserializeObject<GenericResult>(responseContent);
-
-            if (!result.IsSuccess)
-            {
-                throw new SendGridException(result.Message);
-            }
+            SendAsyncInternal(message, newInstance).Wait();
         }
 
-        public async Task SendAsync(SendGridMessage message)
+
+        public async Task SendAsync(SendGridMessage message, bool newInstance = false)
         {
             var currentRetry = 0;
+
             for (;;)
             {
                 try
                 {
-                    await SendAsyncInternal(message);
+                    await SendAsyncInternal(message, newInstance);
                     break;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning($"{ex}");
+                    _logger.LogWarning($"{DateTime.UtcNow} - {ex}");
+
+                    newInstance = true;
                     currentRetry++;
 
                     if (SendGridRetryPolicy.IsRetryOver(currentRetry) || !IsTransient(ex))
@@ -104,6 +77,43 @@ namespace SendGridSharp.Core
                 await Task.Delay(SendGridRetryPolicy.CalcWaitTimeSpan(currentRetry));
             }
         }
+
+
+        private async Task SendAsyncInternal(SendGridMessage message, bool newInstance = false)
+        {
+            var content = GetContent(message);
+
+            var client = GetHttpClient(newInstance);
+
+            var response = await client.PostAsync(Endpoint, content);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            var result = JsonConvert.DeserializeObject<GenericResult>(responseContent);
+
+            if (!result.IsSuccess)
+                throw new SendGridException(result.Message);
+        }
+
+
+        private HttpClient GetHttpClient(bool newInstance)
+        {
+            var dicKey = _apiKey;
+
+            if (string.IsNullOrEmpty(dicKey))
+                dicKey = _credentials.UserName + _credentials.Password;
+
+            if (newInstance)
+                return HttpClients.AddOrUpdate(
+                    dicKey,
+                    k => new HttpClient(new WebApiHandler(_apiKey), false),
+                    (k, c) => new HttpClient(new WebApiHandler(_apiKey), false));
+
+            return HttpClients.GetOrAdd(
+                    dicKey,
+                    k => new HttpClient(new WebApiHandler(_apiKey), false));
+        }
+
 
         private MultipartFormDataContent GetContent(SendGridMessage message)
         {
@@ -173,6 +183,7 @@ namespace SendGridSharp.Core
 
             return content;
         }
+
 
         internal class WebApiHandler : DelegatingHandler
         {
