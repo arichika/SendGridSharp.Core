@@ -4,6 +4,11 @@ SendGridSharp.Core
 Yet Another SendGrid Client for .NET Core
 ## Updates
 
+### 1.1.1
+* reuse HttpClient.
+  * and Refleshing at firing Exceptions.
+* Refactoring.
+
 ### 1.1.0
 * Add Logging.
 * Support Basic Retry Policy at SendAsync() by default. 
