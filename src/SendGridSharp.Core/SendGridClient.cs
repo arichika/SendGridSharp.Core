@@ -25,7 +25,22 @@ namespace SendGridSharp.Core
         public Predicate<Exception> IsTransient = ex => ex is HttpRequestException || ex is SendGridException;
 
 
-        public SendGridClient(NetworkCredential credentials,ILoggerFactory loggerFactory = null, SendGridRetryPolicy sendGridRetryPolicy = null)
+        public SendGridClient(NetworkCredential credentials, SendGridRetryPolicy sendGridRetryPolicy = null)
+        {
+            _credentials = credentials;
+
+            SendGridRetryPolicy = sendGridRetryPolicy ?? new SendGridRetryPolicy();
+        }
+
+        public SendGridClient(string apiKey, SendGridRetryPolicy sendGridRetryPolicy = null)
+        {
+            _apiKey = apiKey;
+
+            SendGridRetryPolicy = sendGridRetryPolicy ?? new SendGridRetryPolicy();
+        }
+
+
+        public SendGridClient(NetworkCredential credentials,ILoggerFactory loggerFactory, SendGridRetryPolicy sendGridRetryPolicy = null)
         {
             _credentials = credentials;
 
@@ -36,7 +51,7 @@ namespace SendGridSharp.Core
         }
 
 
-        public SendGridClient(string apiKey, ILoggerFactory loggerFactory = null, SendGridRetryPolicy sendGridRetryPolicy = null)
+        public SendGridClient(string apiKey, ILoggerFactory loggerFactory, SendGridRetryPolicy sendGridRetryPolicy = null)
         {
             _apiKey = apiKey;
 
@@ -46,6 +61,25 @@ namespace SendGridSharp.Core
             SendGridRetryPolicy = sendGridRetryPolicy ?? new SendGridRetryPolicy();
         }
 
+        public SendGridClient(NetworkCredential credentials, ILogger logger, SendGridRetryPolicy sendGridRetryPolicy = null)
+        {
+            _credentials = credentials;
+
+            if (logger != null)
+                _logger = logger;
+
+            SendGridRetryPolicy = sendGridRetryPolicy ?? new SendGridRetryPolicy();
+        }
+
+        public SendGridClient(string apiKey, ILogger logger, SendGridRetryPolicy sendGridRetryPolicy = null)
+        {
+            _apiKey = apiKey;
+
+            if (logger != null)
+                _logger = logger;
+
+            SendGridRetryPolicy = sendGridRetryPolicy ?? new SendGridRetryPolicy();
+        }
 
         public void Send(SendGridMessage message, bool newInstance = false)
         {
