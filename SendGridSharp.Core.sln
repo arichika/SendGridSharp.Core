@@ -1,16 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2035
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2EE48179-2F00-4A4F-97A2-C34201591C8C}"
-	ProjectSection(SolutionItems) = preProject
-		global.json = global.json
-	EndProjectSection
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SendGridSharp.Core", "src\SendGridSharp.Core\SendGridSharp.Core.csproj", "{44C48374-385C-4444-8B66-3F6CF168A080}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "SendGridSharp.Core", "src\SendGridSharp.Core\SendGridSharp.Core.xproj", "{44C48374-385C-4444-8B66-3F6CF168A080}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "SendGridSharp.Core.Tests", "src\SendGridSharp.Core.Tests\SendGridSharp.Core.Tests.xproj", "{D505A4D2-695E-4403-BC96-4AD26801D9DA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SendGridSharp.Core.Tests", "src\SendGridSharp.Core.Tests\SendGridSharp.Core.Tests.csproj", "{D505A4D2-695E-4403-BC96-4AD26801D9DA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,5 +24,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {10724460-6A18-4D0E-B938-EF6DDB90F0D6}
 	EndGlobalSection
 EndGlobal
